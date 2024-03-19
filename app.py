@@ -96,19 +96,28 @@ def api():
 @app.route('/predict', methods=['POST'])
 def upload():
     if request.method == 'POST':
-        f = request.files['file']
+        try:
+            f = request.files['file']
+            basepath = os.path.dirname(__file__)
+            uploads_dir = os.path.join(basepath, 'uploads')
 
-        basepath = os.path.dirname(__file__)
-        file_path = os.path.join(basepath, 'uploads', secure_filename(f.filename))
-        f.save(file_path)
+            if not os.path.exists(uploads_dir):
+                os.makedirs(uploads_dir)
 
-        predictions = getResult(file_path)
-        predicted_label = labels[np.argmax(predictions)]
-        if (predicted_label=='Tomato___Early_blight'):
-            predicted_label="No disease detected"
-        return predicted_label
+            file_path = os.path.join(uploads_dir, secure_filename(f.filename))
+            f.save(file_path)
 
+            predictions = getResult(file_path)
+            predicted_label = labels[np.argmax(predictions)]
+            if predicted_label == 'Tomato___Early_blight':
+                predicted_label = "No disease detected"
+            return predicted_label
+        except Exception as e:
+            # Log the error for debugging purposes
+            print("Error occurred while uploading file:", str(e))
+            return "An error occurred while processing the request."
     return None
+
 
 if __name__ == '__main__':
     app.run(debug=True)
